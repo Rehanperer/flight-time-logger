@@ -159,8 +159,9 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
   };
 
   const T = calculateT();
-  const Tx = Math.round(T * multipliers.x);
-  const Ty = Math.round(Tx * multipliers.y);
+  const decimalHours = T / 60;
+  const Tx = Math.round(decimalHours * multipliers.x * 100) / 100;
+  const Ty = Math.round(Tx * multipliers.y * 100) / 100;
 
   const handleAdd = () => {
     if (T > 0) {
@@ -231,7 +232,7 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
             <h3 className="text-sm font-medium text-slate-300">Multipliers</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">Multiplier X</label>
+                <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">USD Rate (X)</label>
                 <input
                   type="number"
                   step="0.1"
@@ -241,7 +242,7 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">Multiplier Y</label>
+                <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">QAR Rate (Y)</label>
                 <input
                   type="number"
                   step="0.1"
@@ -274,12 +275,12 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
             <span className="text-2xl font-black text-indigo-400">{formatMinutes(T)}</span>
           </div>
           <div className="flex justify-between items-center border-b border-white/10 pb-3">
-            <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">T x {multipliers.x} (Tx)</span>
-            <span className="text-xl font-black text-purple-400">{formatMinutes(Tx)}</span>
+            <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">USD (T x {multipliers.x})</span>
+            <span className="text-xl font-black text-purple-400">${Tx.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Tx x {multipliers.y} (Ty)</span>
-            <span className="text-xl font-black text-pink-400">{formatMinutes(Ty)}</span>
+            <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">QAR (USD x {multipliers.y})</span>
+            <span className="text-xl font-black text-pink-400">{Ty.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} QAR</span>
           </div>
         </motion.div>
       )}
@@ -345,8 +346,15 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
   if (view) {
     const monthlyLogs = getMonthlyLogs(view.monthIdx);
     const totalT = monthlyLogs.reduce((acc, curr) => acc + curr.durationMinutes, 0);
-    const totalTx = monthlyLogs.reduce((acc, curr) => acc + Math.round(curr.durationMinutes * multipliers.x), 0);
-    const totalTy = monthlyLogs.reduce((acc, curr) => acc + Math.round(Math.round(curr.durationMinutes * multipliers.x) * multipliers.y), 0);
+    const totalTx = monthlyLogs.reduce((acc, curr) => {
+      const decimalHours = curr.durationMinutes / 60;
+      return acc + (decimalHours * multipliers.x);
+    }, 0);
+    const totalTy = monthlyLogs.reduce((acc, curr) => {
+      const decimalHours = curr.durationMinutes / 60;
+      const tx = decimalHours * multipliers.x;
+      return acc + (tx * multipliers.y);
+    }, 0);
 
     return (
       <motion.div
@@ -372,21 +380,22 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
         {/* Monthly Summary Cards */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="glass-card p-4 bg-purple-500/10 border-purple-500/20">
-            <div className="text-[10px] text-purple-400/70 uppercase tracking-widest font-black mb-1">Total TX</div>
-            <div className="text-xl font-black text-purple-400">{formatMinutes(totalTx)}</div>
-            <div className="text-[10px] text-slate-500 font-bold">{formatMinutesDecimal(totalTx)} hrs</div>
+            <div className="text-[10px] text-purple-400/70 uppercase tracking-widest font-black mb-1">Total USD</div>
+            <div className="text-xl font-black text-purple-400">${totalTx.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="text-[10px] text-slate-500 font-bold">Converted from decimal hours</div>
           </div>
           <div className="glass-card p-4 bg-pink-500/10 border-pink-500/20">
-            <div className="text-[10px] text-pink-400/70 uppercase tracking-widest font-black mb-1">Total TY</div>
-            <div className="text-xl font-black text-pink-400">{formatMinutes(totalTy)}</div>
-            <div className="text-[10px] text-slate-500 font-bold">{formatMinutesDecimal(totalTy)} hrs</div>
+            <div className="text-[10px] text-pink-400/70 uppercase tracking-widest font-black mb-1">Total QAR</div>
+            <div className="text-xl font-black text-pink-400">{totalTy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="text-[10px] text-slate-500 font-bold">Converted from USD</div>
           </div>
         </div>
 
         <div className="space-y-4">
           {monthlyLogs.map(log => {
-            const Tx = Math.round(log.durationMinutes * multipliers.x);
-            const Ty = Math.round(Tx * multipliers.y);
+            const decimalHours = log.durationMinutes / 60;
+            const Tx = decimalHours * multipliers.x;
+            const Ty = Tx * multipliers.y;
             return (
               <div key={log.id} className="p-5 bg-slate-900/60 border border-white/5 rounded-2xl premium-shadow group">
                 <div className="flex justify-between items-start mb-4">
@@ -410,12 +419,12 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
 
                 <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/10">
                   <div className="bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20">
-                    <span className="text-[10px] text-indigo-400/70 uppercase tracking-widest block mb-2 font-black">TX ({multipliers.x})</span>
-                    <span className="text-xl font-black text-indigo-400 leading-none">{formatMinutes(Tx)}</span>
+                    <span className="text-[10px] text-indigo-400/70 uppercase tracking-widest block mb-1 font-black">USD (${multipliers.x})</span>
+                    <span className="text-xl font-black text-indigo-400 leading-none">${Tx.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="bg-purple-500/10 p-4 rounded-xl border border-purple-500/20 text-right">
-                    <span className="text-[10px] text-purple-400/70 uppercase tracking-widest block mb-2 font-black">TY (TX*{multipliers.y})</span>
-                    <span className="text-xl font-black text-purple-400 leading-none">{formatMinutes(Ty)}</span>
+                    <span className="text-[10px] text-purple-400/70 uppercase tracking-widest block mb-1 font-black">QAR (Rate {multipliers.y})</span>
+                    <span className="text-xl font-black text-purple-400 leading-none">{Ty.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 </div>
               </div>
@@ -446,8 +455,15 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
         {months.map((month, idx) => {
           const monthlyLogs = getMonthlyLogs(idx);
           const totalT = monthlyLogs.reduce((acc, curr) => acc + curr.durationMinutes, 0);
-          const totalTx = monthlyLogs.reduce((acc, curr) => acc + Math.round(curr.durationMinutes * multipliers.x), 0);
-          const totalTy = monthlyLogs.reduce((acc, curr) => acc + Math.round(Math.round(curr.durationMinutes * multipliers.x) * multipliers.y), 0);
+          const totalTx = monthlyLogs.reduce((acc, curr) => {
+            const decimalHours = curr.durationMinutes / 60;
+            return acc + (decimalHours * multipliers.x);
+          }, 0);
+          const totalTy = monthlyLogs.reduce((acc, curr) => {
+            const decimalHours = curr.durationMinutes / 60;
+            const tx = decimalHours * multipliers.x;
+            return acc + (tx * multipliers.y);
+          }, 0);
 
           if (totalT === 0) return null;
 
@@ -470,12 +486,12 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
 
               <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/5">
                 <div className="text-left">
-                  <div className="text-[10px] text-purple-400/60 uppercase tracking-widest font-black">TX Total</div>
-                  <div className="text-sm font-black text-purple-400">{formatMinutes(totalTx)}</div>
+                  <div className="text-[10px] text-purple-400/60 uppercase tracking-widest font-black">USD Total</div>
+                  <div className="text-sm font-black text-purple-400">${totalTx.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] text-pink-400/60 uppercase tracking-widest font-black">TY Total</div>
-                  <div className="text-sm font-black text-pink-400">{formatMinutes(totalTy)}</div>
+                  <div className="text-[10px] text-pink-400/60 uppercase tracking-widest font-black">QAR Total</div>
+                  <div className="text-sm font-black text-pink-400">{totalTy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
               </div>
             </button>
