@@ -179,7 +179,7 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">Departure Date</label>
+              <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1 font-bold">Departure Date</label>
               <input
                 type="date"
                 value={depDate}
@@ -192,7 +192,7 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
               />
             </div>
             <div>
-              <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">Arrival Date</label>
+              <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1 font-bold">Arrival Date</label>
               <input
                 type="date"
                 value={arrDate}
@@ -205,7 +205,7 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">Departure (HHmm)</label>
+              <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1 font-bold">Departure (HHmm)</label>
               <input
                 type="text"
                 maxLength={4}
@@ -216,7 +216,7 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
               />
             </div>
             <div>
-              <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">Arrival (HHmm)</label>
+              <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1 font-bold">Arrival (HHmm)</label>
               <input
                 type="text"
                 maxLength={4}
@@ -232,7 +232,7 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
             <h3 className="text-sm font-medium text-slate-300">Multipliers</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">USD Rate (X)</label>
+                <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1 font-bold">USD Rate (X)</label>
                 <input
                   type="number"
                   step="0.1"
@@ -242,7 +242,7 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">QAR Rate (Y)</label>
+                <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1 font-bold">QAR Rate (Y)</label>
                 <input
                   type="number"
                   step="0.1"
@@ -271,15 +271,15 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
           className="glass-card p-6 grid grid-cols-1 gap-4 premium-shadow bg-indigo-900/10 border-indigo-500/20"
         >
           <div className="flex justify-between items-center border-b border-white/10 pb-3">
-            <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Flight Time (T)</span>
+            <span className="text-sm text-slate-300 font-bold uppercase tracking-widest">Flying Hrs</span>
             <span className="text-2xl font-black text-indigo-400">{formatMinutes(T)}</span>
           </div>
           <div className="flex justify-between items-center border-b border-white/10 pb-3">
-            <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">USD (T x {multipliers.x})</span>
+            <span className="text-sm text-slate-300 font-bold uppercase tracking-widest">USD (T x {multipliers.x})</span>
             <span className="text-xl font-black text-purple-400">${Tx.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">QAR (USD x {multipliers.y})</span>
+            <span className="text-sm text-slate-300 font-bold uppercase tracking-widest">QAR (USD x {multipliers.y})</span>
             <span className="text-xl font-black text-pink-400">{Ty.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} QAR</span>
           </div>
         </motion.div>
@@ -297,17 +297,17 @@ const HistoryView: React.FC<{ logs: FlightLog[]; onRemove: (id: string) => void 
       <div className="space-y-3">
         {logs.map((log) => (
           <div key={log.id} className="glass-card p-4 flex justify-between items-center relative group">
-            <div>
-              <div className="text-base font-bold text-slate-100">
+            <div className="min-w-0 flex-1">
+              <div className="text-base font-bold text-slate-100 truncate">
                 {log.depDate && log.arrDate && log.depDate === log.arrDate
                   ? format(parseISO(log.depDate), 'MMM dd, yyyy')
                   : log.depDate && log.arrDate
                     ? `${format(parseISO(log.depDate), 'MMM dd')} - ${format(parseISO(log.arrDate), 'MMM dd, yyyy')}`
                     : 'Invalid Date'}
               </div>
-              <div className="text-sm text-slate-400 font-medium tracking-wide tracking-wider">{log.depTime} — {log.arrTime}</div>
+              <div className="text-base text-slate-300 font-bold tracking-wide">{log.depTime} — {log.arrTime}</div>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0 ml-4">
               <div className="text-xl font-black text-indigo-400">{formatMinutes(log.durationMinutes)}</div>
             </div>
             <button
@@ -371,8 +371,8 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
           </button>
           <div>
             <h2 className="text-2xl font-black text-slate-100">{view.monthName} {selectedYear}</h2>
-            <div className="text-xs text-slate-500 uppercase font-bold tracking-widest">
-              Total T: {formatMinutes(totalT)} ({formatMinutesDecimal(totalT)} hrs)
+            <div className="text-sm text-slate-400 uppercase font-bold tracking-widest">
+              Total Flying Hrs: {formatMinutes(totalT)} ({formatMinutesDecimal(totalT)} hrs)
             </div>
           </div>
         </div>
@@ -380,14 +380,14 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
         {/* Monthly Summary Cards */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="glass-card p-4 bg-purple-500/10 border-purple-500/20">
-            <div className="text-[10px] text-purple-400/70 uppercase tracking-widest font-black mb-1">Total USD</div>
+            <div className="text-xs text-purple-300 uppercase tracking-widest font-black mb-1">Total USD</div>
             <div className="text-xl font-black text-purple-400">${totalTx.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <div className="text-[10px] text-slate-500 font-bold">Converted from decimal hours</div>
+            <div className="text-xs text-slate-400 font-bold">Converted from decimal hours</div>
           </div>
           <div className="glass-card p-4 bg-pink-500/10 border-pink-500/20">
-            <div className="text-[10px] text-pink-400/70 uppercase tracking-widest font-black mb-1">Total QAR</div>
+            <div className="text-xs text-pink-300 uppercase tracking-widest font-black mb-1">Total QAR</div>
             <div className="text-xl font-black text-pink-400">{totalTy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <div className="text-[10px] text-slate-500 font-bold">Converted from USD</div>
+            <div className="text-xs text-slate-400 font-bold">Converted from USD</div>
           </div>
         </div>
 
@@ -399,8 +399,8 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
             return (
               <div key={log.id} className="p-5 bg-slate-900/60 border border-white/5 rounded-2xl premium-shadow group">
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <div className="text-xl font-black text-slate-100">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xl font-black text-slate-100 truncate">
                       {log.depDate && log.arrDate && log.depDate === log.arrDate
                         ? format(parseISO(log.depDate), 'dd MMM yyyy')
                         : log.depDate && log.arrDate
@@ -409,8 +409,8 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
                     </div>
                     <div className="text-sm text-slate-400 font-bold tracking-wider uppercase mt-1">{log.depTime} — {log.arrTime}</div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] mb-1 font-bold">Duration</div>
+                  <div className="text-right flex-shrink-0 ml-4">
+                    <div className="text-xs text-slate-400 uppercase tracking-[0.2em] mb-1 font-bold">Flying Hrs</div>
                     <div className="text-2xl font-black text-indigo-400 leading-none">
                       {formatMinutes(log.durationMinutes)}
                     </div>
@@ -419,11 +419,11 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
 
                 <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/10">
                   <div className="bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20">
-                    <span className="text-[10px] text-indigo-400/70 uppercase tracking-widest block mb-1 font-black">USD (${multipliers.x})</span>
+                    <span className="text-xs text-indigo-300 uppercase tracking-widest block mb-1 font-black">USD (${multipliers.x})</span>
                     <span className="text-xl font-black text-indigo-400 leading-none">${Tx.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="bg-purple-500/10 p-4 rounded-xl border border-purple-500/20 text-right">
-                    <span className="text-[10px] text-purple-400/70 uppercase tracking-widest block mb-1 font-black">QAR (Rate {multipliers.y})</span>
+                    <span className="text-xs text-purple-300 uppercase tracking-widest block mb-1 font-black">QAR (Rate {multipliers.y})</span>
                     <span className="text-xl font-black text-purple-400 leading-none">{Ty.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 </div>
@@ -486,11 +486,11 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
 
               <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/5">
                 <div className="text-left">
-                  <div className="text-[10px] text-purple-400/60 uppercase tracking-widest font-black">USD Total</div>
+                  <div className="text-xs text-purple-300 uppercase tracking-widest font-black">USD Total</div>
                   <div className="text-sm font-black text-purple-400">${totalTx.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] text-pink-400/60 uppercase tracking-widest font-black">QAR Total</div>
+                  <div className="text-xs text-pink-300 uppercase tracking-widest font-black">QAR Total</div>
                   <div className="text-sm font-black text-pink-400">{totalTy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 </div>
               </div>
