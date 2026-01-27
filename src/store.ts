@@ -4,7 +4,8 @@ import { calculateDurationMinutes } from './utils/time';
 
 export interface FlightLog {
     id: string;
-    date: string;
+    depDate: string;
+    arrDate: string;
     depTime: string; // HHmm format
     arrTime: string; // HHmm format
     durationMinutes: number;
@@ -16,7 +17,7 @@ interface FlightState {
         x: number;
         y: number;
     };
-    addLog: (date: string, depTime: string, arrTime: string) => void;
+    addLog: (depDate: string, arrDate: string, depTime: string, arrTime: string) => void;
     removeLog: (id: string) => void;
     setMultipliers: (x: number, y: number) => void;
 }
@@ -29,11 +30,12 @@ export const useFlightStore = create<FlightState>()(
                 x: 1.5,
                 y: 2.0,
             },
-            addLog: (date, depTime, arrTime) => {
-                const durationMinutes = calculateDurationMinutes(depTime, arrTime);
+            addLog: (depDate, arrDate, depTime, arrTime) => {
+                const durationMinutes = calculateDurationMinutes(depDate, depTime, arrDate, arrTime);
                 const newLog: FlightLog = {
                     id: crypto.randomUUID(),
-                    date,
+                    depDate,
+                    arrDate,
                     depTime,
                     arrTime,
                     durationMinutes,
@@ -46,6 +48,23 @@ export const useFlightStore = create<FlightState>()(
         }),
         {
             name: 'flight-storage',
+            version: 1,
+            migrate: (persistedState: any, version: number) => {
+                const today = new Date().toISOString().split('T')[0];
+                if (version === 0) {
+                    if (persistedState && persistedState.logs) {
+                        return {
+                            ...persistedState,
+                            logs: persistedState.logs.map((log: any) => ({
+                                ...log,
+                                depDate: log.depDate || log.date || today,
+                                arrDate: log.arrDate || log.date || today,
+                            })),
+                        };
+                    }
+                }
+                return persistedState;
+            },
         }
     )
 );

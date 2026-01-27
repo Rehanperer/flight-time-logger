@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useFlightStore } from './store';
+import { useFlightStore, type FlightLog } from './store';
 import { formatMinutes, formatMinutesDecimal } from './utils/time';
 import { Plus, X, History, Plane, Calculator, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, parse } from 'date-fns';
 
 const App: React.FC = () => {
   const { logs, multipliers, addLog, removeLog, setMultipliers } = useFlightStore();
@@ -46,7 +46,7 @@ const App: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <CalculatorView onAdd={(...args: any[]) => { addLog(...(args as [any, any, any])); showToast('Flight Logged!'); }} multipliers={multipliers} setMultipliers={setMultipliers} />
+              <CalculatorView onAdd={(...args: [string, string, string, string]) => { addLog(...args); showToast('Flight Logged!'); }} multipliers={multipliers} setMultipliers={setMultipliers} />
             </motion.div>
           )}
           {activeTab === 'history' && (
@@ -139,27 +139,32 @@ const NavButton: React.FC<{ active: boolean; onClick: () => void; icon: React.Re
 
 // --- VIEW COMPONENTS ---
 
-const CalculatorView: React.FC<{ onAdd: any; multipliers: any; setMultipliers: any }> = ({ onAdd, multipliers, setMultipliers }) => {
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTime: string, arrTime: string) => void; multipliers: { x: number; y: number }; setMultipliers: (x: number, y: number) => void }> = ({ onAdd, multipliers, setMultipliers }) => {
+  const [depDate, setDepDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [arrDate, setArrDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [depTime, setDepTime] = useState('');
   const [arrTime, setArrTime] = useState('');
 
   const calculateT = () => {
     if (depTime.length !== 4 || arrTime.length !== 4) return 0;
-    // Simple duration calc logic reused here for preview
-    const parse = (t: string) => ({ h: parseInt(t.slice(0, 2)), m: parseInt(t.slice(2)) });
-    const d = parse(depTime);
-    const a = parse(arrTime);
-    let diff = (a.h * 60 + a.m) - (d.h * 60 + d.m);
-    if (diff < 0) diff += 24 * 60;
-    return diff;
+    try {
+      const dep = parse(`${depDate} ${depTime}`, 'yyyy-MM-dd HHmm', new Date());
+      const arr = parse(`${arrDate} ${arrTime}`, 'yyyy-MM-dd HHmm', new Date());
+      if (isNaN(dep.getTime()) || isNaN(arr.getTime())) return 0;
+      const diff = (arr.getTime() - dep.getTime()) / (1000 * 60);
+      return diff > 0 ? diff : 0;
+    } catch {
+      return 0;
+    }
   };
 
   const T = calculateT();
+  const Tx = Math.round(T * multipliers.x);
+  const Ty = Math.round(Tx * multipliers.y);
 
   const handleAdd = () => {
     if (T > 0) {
-      onAdd(date, depTime, arrTime);
+      onAdd(depDate, arrDate, depTime, arrTime);
       setDepTime('');
       setArrTime('');
     }
@@ -168,22 +173,38 @@ const CalculatorView: React.FC<{ onAdd: any; multipliers: any; setMultipliers: a
   return (
     <div className="space-y-6">
       <div className="glass-card p-6 space-y-4 premium-shadow">
-        <h2 className="text-xl font-semibold mb-2">New Flight</h2>
+        <h2 className="text-xl font-semibold mb-2 text-slate-100">New Flight</h2>
 
         <div className="space-y-4">
-          <div>
-            <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">Date</label>
-            <input
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 outline-none focus:border-indigo-500 transition-colors"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">Departure Date</label>
+              <input
+                type="date"
+                value={depDate}
+                onChange={e => {
+                  setDepDate(e.target.value);
+                  // Default arrival date to same as departure
+                  if (arrDate < e.target.value) setArrDate(e.target.value);
+                }}
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-indigo-500 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">Arrival Date</label>
+              <input
+                type="date"
+                value={arrDate}
+                min={depDate}
+                onChange={e => setArrDate(e.target.value)}
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-indigo-500 transition-colors"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">Departure (HHmm)</label>
+              <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">Departure (HHmm)</label>
               <input
                 type="text"
                 maxLength={4}
@@ -194,7 +215,7 @@ const CalculatorView: React.FC<{ onAdd: any; multipliers: any; setMultipliers: a
               />
             </div>
             <div>
-              <label className="text-xs text-slate-400 uppercase tracking-widest block mb-1">Arrival (HHmm)</label>
+              <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">Arrival (HHmm)</label>
               <input
                 type="text"
                 maxLength={4}
@@ -210,7 +231,7 @@ const CalculatorView: React.FC<{ onAdd: any; multipliers: any; setMultipliers: a
             <h3 className="text-sm font-medium text-slate-300">Multipliers</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1">Multiplier X</label>
+                <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">Multiplier X</label>
                 <input
                   type="number"
                   step="0.1"
@@ -220,7 +241,7 @@ const CalculatorView: React.FC<{ onAdd: any; multipliers: any; setMultipliers: a
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1">Multiplier Y</label>
+                <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-1 font-bold">Multiplier Y</label>
                 <input
                   type="number"
                   step="0.1"
@@ -236,7 +257,7 @@ const CalculatorView: React.FC<{ onAdd: any; multipliers: any; setMultipliers: a
         <button
           onClick={handleAdd}
           disabled={T === 0}
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 mt-4"
+          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-3 rounded-xl transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-indigo-600/20"
         >
           <Plus size={20} /> Add to Logs
         </button>
@@ -244,21 +265,21 @@ const CalculatorView: React.FC<{ onAdd: any; multipliers: any; setMultipliers: a
 
       {T > 0 && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="glass-card p-6 grid grid-cols-1 gap-4 premium-shadow bg-indigo-900/10"
+          className="glass-card p-6 grid grid-cols-1 gap-4 premium-shadow bg-indigo-900/10 border-indigo-500/20"
         >
           <div className="flex justify-between items-center border-b border-white/10 pb-3">
-            <span className="text-slate-400 font-medium">Total Flight Time (T)</span>
-            <span className="text-2xl font-bold text-indigo-400">{formatMinutes(T)}</span>
+            <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Flight Time (T)</span>
+            <span className="text-2xl font-black text-indigo-400">{formatMinutes(T)}</span>
           </div>
           <div className="flex justify-between items-center border-b border-white/10 pb-3">
-            <span className="text-slate-400 font-medium">T x {multipliers.x} (Tx)</span>
-            <span className="text-xl font-bold text-purple-400">{formatMinutes(Math.round(T * multipliers.x))}</span>
+            <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">T x {multipliers.x} (Tx)</span>
+            <span className="text-xl font-black text-purple-400">{formatMinutes(Tx)}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-slate-400 font-medium">T x {multipliers.y} (Ty)</span>
-            <span className="text-xl font-bold text-pink-400">{formatMinutes(Math.round(T * multipliers.y))}</span>
+            <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Tx x {multipliers.y} (Ty)</span>
+            <span className="text-xl font-black text-pink-400">{formatMinutes(Ty)}</span>
           </div>
         </motion.div>
       )}
@@ -266,7 +287,7 @@ const CalculatorView: React.FC<{ onAdd: any; multipliers: any; setMultipliers: a
   );
 };
 
-const HistoryView: React.FC<{ logs: any[]; onRemove: (id: string) => void }> = ({ logs, onRemove }) => (
+const HistoryView: React.FC<{ logs: FlightLog[]; onRemove: (id: string) => void }> = ({ logs, onRemove }) => (
   <div className="space-y-4">
     <h2 className="text-xl font-bold flex items-center gap-2"><History size={20} /> Recent Flights</h2>
     {logs.length === 0 ? (
@@ -276,7 +297,13 @@ const HistoryView: React.FC<{ logs: any[]; onRemove: (id: string) => void }> = (
         {logs.map((log) => (
           <div key={log.id} className="glass-card p-4 flex justify-between items-center relative group">
             <div>
-              <div className="text-base font-bold text-slate-100">{format(parseISO(log.date), 'MMM dd, yyyy')}</div>
+              <div className="text-base font-bold text-slate-100">
+                {log.depDate && log.arrDate && log.depDate === log.arrDate
+                  ? format(parseISO(log.depDate), 'MMM dd, yyyy')
+                  : log.depDate && log.arrDate
+                    ? `${format(parseISO(log.depDate), 'MMM dd')} - ${format(parseISO(log.arrDate), 'MMM dd, yyyy')}`
+                    : 'Invalid Date'}
+              </div>
               <div className="text-sm text-slate-400 font-medium tracking-wide tracking-wider">{log.depTime} — {log.arrTime}</div>
             </div>
             <div className="text-right">
@@ -295,7 +322,7 @@ const HistoryView: React.FC<{ logs: any[]; onRemove: (id: string) => void }> = (
   </div>
 );
 
-const StatsView: React.FC<{ logs: any[] }> = ({ logs }) => {
+const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
   const { multipliers } = useFlightStore();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [view, setView] = useState<{ monthIdx: number; monthName: string } | null>(null);
@@ -308,15 +335,18 @@ const StatsView: React.FC<{ logs: any[] }> = ({ logs }) => {
   const getMonthlyLogs = (monthIdx: number) => {
     return logs
       .filter(log => {
-        const [year, month] = log.date.split('-').map(Number);
+        if (!log.depDate) return false;
+        const [year, month] = log.depDate.split('-').map(Number);
         return year === selectedYear && (month - 1) === monthIdx;
       })
-      .sort((a, b) => b.date.localeCompare(a.date));
+      .sort((a, b) => (b.depDate || '').localeCompare(a.depDate || ''));
   };
 
   if (view) {
     const monthlyLogs = getMonthlyLogs(view.monthIdx);
-    const total = monthlyLogs.reduce((acc, curr) => acc + curr.durationMinutes, 0);
+    const totalT = monthlyLogs.reduce((acc, curr) => acc + curr.durationMinutes, 0);
+    const totalTx = monthlyLogs.reduce((acc, curr) => acc + Math.round(curr.durationMinutes * multipliers.x), 0);
+    const totalTy = monthlyLogs.reduce((acc, curr) => acc + Math.round(Math.round(curr.durationMinutes * multipliers.x) * multipliers.y), 0);
 
     return (
       <motion.div
@@ -334,39 +364,63 @@ const StatsView: React.FC<{ logs: any[] }> = ({ logs }) => {
           <div>
             <h2 className="text-2xl font-black text-slate-100">{view.monthName} {selectedYear}</h2>
             <div className="text-xs text-slate-500 uppercase font-bold tracking-widest">
-              Total: {formatMinutes(total)} ({formatMinutesDecimal(total)} hrs)
+              Total T: {formatMinutes(totalT)} ({formatMinutesDecimal(totalT)} hrs)
             </div>
           </div>
         </div>
 
+        {/* Monthly Summary Cards */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="glass-card p-4 bg-purple-500/10 border-purple-500/20">
+            <div className="text-[10px] text-purple-400/70 uppercase tracking-widest font-black mb-1">Total TX</div>
+            <div className="text-xl font-black text-purple-400">{formatMinutes(totalTx)}</div>
+            <div className="text-[10px] text-slate-500 font-bold">{formatMinutesDecimal(totalTx)} hrs</div>
+          </div>
+          <div className="glass-card p-4 bg-pink-500/10 border-pink-500/20">
+            <div className="text-[10px] text-pink-400/70 uppercase tracking-widest font-black mb-1">Total TY</div>
+            <div className="text-xl font-black text-pink-400">{formatMinutes(totalTy)}</div>
+            <div className="text-[10px] text-slate-500 font-bold">{formatMinutesDecimal(totalTy)} hrs</div>
+          </div>
+        </div>
+
         <div className="space-y-4">
-          {monthlyLogs.map(log => (
-            <div key={log.id} className="p-5 bg-slate-900/60 border border-white/5 rounded-2xl premium-shadow group">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <div className="text-xl font-black text-slate-100">{format(parseISO(log.date), 'dd MMM yyyy')}</div>
-                  <div className="text-sm text-slate-400 font-bold tracking-wider uppercase mt-1">{log.depTime} — {log.arrTime}</div>
+          {monthlyLogs.map(log => {
+            const Tx = Math.round(log.durationMinutes * multipliers.x);
+            const Ty = Math.round(Tx * multipliers.y);
+            return (
+              <div key={log.id} className="p-5 bg-slate-900/60 border border-white/5 rounded-2xl premium-shadow group">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <div className="text-xl font-black text-slate-100">
+                      {log.depDate && log.arrDate && log.depDate === log.arrDate
+                        ? format(parseISO(log.depDate), 'dd MMM yyyy')
+                        : log.depDate && log.arrDate
+                          ? `${format(parseISO(log.depDate), 'dd MMM')} - ${format(parseISO(log.arrDate), 'dd MMM yyyy')}`
+                          : 'Invalid Date'}
+                    </div>
+                    <div className="text-sm text-slate-400 font-bold tracking-wider uppercase mt-1">{log.depTime} — {log.arrTime}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] mb-1 font-bold">Duration</div>
+                    <div className="text-2xl font-black text-indigo-400 leading-none">
+                      {formatMinutes(log.durationMinutes)}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] mb-1 font-bold">Duration</div>
-                  <div className="text-2xl font-black text-indigo-400 leading-none">
-                    {formatMinutes(log.durationMinutes)}
+
+                <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/10">
+                  <div className="bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20">
+                    <span className="text-[10px] text-indigo-400/70 uppercase tracking-widest block mb-2 font-black">TX ({multipliers.x})</span>
+                    <span className="text-xl font-black text-indigo-400 leading-none">{formatMinutes(Tx)}</span>
+                  </div>
+                  <div className="bg-purple-500/10 p-4 rounded-xl border border-purple-500/20 text-right">
+                    <span className="text-[10px] text-purple-400/70 uppercase tracking-widest block mb-2 font-black">TY (TX*{multipliers.y})</span>
+                    <span className="text-xl font-black text-purple-400 leading-none">{formatMinutes(Ty)}</span>
                   </div>
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/10">
-                <div className="bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20">
-                  <span className="text-[10px] text-indigo-400/70 uppercase tracking-widest block mb-2 font-black">TX ({multipliers.x})</span>
-                  <span className="text-xl font-black text-indigo-400 leading-none">{formatMinutes(Math.round(log.durationMinutes * multipliers.x))}</span>
-                </div>
-                <div className="bg-purple-500/10 p-4 rounded-xl border border-purple-500/20 text-right">
-                  <span className="text-[10px] text-purple-400/70 uppercase tracking-widest block mb-2 font-black">TY ({multipliers.y})</span>
-                  <span className="text-xl font-black text-purple-400 leading-none">{formatMinutes(Math.round(log.durationMinutes * multipliers.y))}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </motion.div>
     );
@@ -391,26 +445,38 @@ const StatsView: React.FC<{ logs: any[] }> = ({ logs }) => {
       <div className="grid grid-cols-1 gap-3">
         {months.map((month, idx) => {
           const monthlyLogs = getMonthlyLogs(idx);
-          const total = monthlyLogs.reduce((acc, curr) => acc + curr.durationMinutes, 0);
+          const totalT = monthlyLogs.reduce((acc, curr) => acc + curr.durationMinutes, 0);
+          const totalTx = monthlyLogs.reduce((acc, curr) => acc + Math.round(curr.durationMinutes * multipliers.x), 0);
+          const totalTy = monthlyLogs.reduce((acc, curr) => acc + Math.round(Math.round(curr.durationMinutes * multipliers.x) * multipliers.y), 0);
 
-          if (total === 0) return null;
+          if (totalT === 0) return null;
 
           return (
             <button
               key={month}
               onClick={() => setView({ monthIdx: idx, monthName: month })}
-              className="w-full glass-card p-5 flex justify-between items-center hover:border-indigo-500 hover:bg-indigo-500/5 group transition-all"
+              className="w-full glass-card p-5 hover:border-indigo-500 hover:bg-indigo-500/5 group transition-all"
             >
-              <div className="text-left">
-                <div className="text-xl font-black text-slate-100 group-hover:text-indigo-400 transition-colors">{month}</div>
-                <div className="text-xs text-slate-500 uppercase font-black tracking-widest mt-1">{monthlyLogs.length} Flights</div>
-              </div>
-              <div className="text-right flex items-center gap-4">
-                <div>
-                  <div className="text-2xl font-black text-indigo-400 leading-tight">{formatMinutes(total)}</div>
-                  <div className="text-sm text-slate-500 uppercase font-black tracking-tight">{formatMinutesDecimal(total)} hours</div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="text-left">
+                  <div className="text-xl font-black text-slate-100 group-hover:text-indigo-400 transition-colors">{month}</div>
+                  <div className="text-xs text-slate-500 uppercase font-black tracking-widest mt-1">{monthlyLogs.length} Flights</div>
                 </div>
-                <Plus size={24} className="text-slate-700 group-hover:text-indigo-400 transition-colors" />
+                <div className="text-right">
+                  <div className="text-2xl font-black text-indigo-400 leading-tight">{formatMinutes(totalT)}</div>
+                  <div className="text-xs text-slate-500 font-bold">{formatMinutesDecimal(totalT)} hrs</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/5">
+                <div className="text-left">
+                  <div className="text-[10px] text-purple-400/60 uppercase tracking-widest font-black">TX Total</div>
+                  <div className="text-sm font-black text-purple-400">{formatMinutes(totalTx)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-pink-400/60 uppercase tracking-widest font-black">TY Total</div>
+                  <div className="text-sm font-black text-pink-400">{formatMinutes(totalTy)}</div>
+                </div>
               </div>
             </button>
           );

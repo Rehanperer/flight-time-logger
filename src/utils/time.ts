@@ -18,21 +18,16 @@ export function parseHoursMinutes(timeStr: string) {
     return { hours, minutes };
 }
 
-export function calculateDurationMinutes(depTime: string, arrTime: string) {
-    const dep = parseHoursMinutes(depTime);
-    const arr = parseHoursMinutes(arrTime);
+import { differenceInMinutes, parse } from 'date-fns';
 
-    if (!dep || !arr) return 0;
+export function calculateDurationMinutes(depDate: string, depTime: string, arrDate: string, arrTime: string) {
+    const dep = parse(`${depDate} ${depTime}`, 'yyyy-MM-dd HHmm', new Date());
+    const arr = parse(`${arrDate} ${arrTime}`, 'yyyy-MM-dd HHmm', new Date());
 
-    let depTotal = dep.hours * 60 + dep.minutes;
-    let arrTotal = arr.hours * 60 + arr.minutes;
+    if (isNaN(dep.getTime()) || isNaN(arr.getTime())) return 0;
 
-    if (arrTotal < depTotal) {
-        // Over midnight
-        arrTotal += 24 * 60;
-    }
-
-    return arrTotal - depTotal;
+    const diff = differenceInMinutes(arr, dep);
+    return diff > 0 ? diff : 0;
 }
 
 export function formatMinutes(totalMinutes: number) {
