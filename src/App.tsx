@@ -46,7 +46,7 @@ const App: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <CalculatorView onAdd={(...args: [string, string, string, string]) => { addLog(...args); showToast('Flight Logged!'); }} multipliers={multipliers} setMultipliers={setMultipliers} />
+              <CalculatorView onAdd={(...args: [string, string, string, string, number, number]) => { addLog(...args); showToast('Flight Logged!'); }} multipliers={multipliers} setMultipliers={setMultipliers} />
             </motion.div>
           )}
           {activeTab === 'history' && (
@@ -139,7 +139,7 @@ const NavButton: React.FC<{ active: boolean; onClick: () => void; icon: React.Re
 
 // --- VIEW COMPONENTS ---
 
-const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTime: string, arrTime: string) => void; multipliers: { x: number; y: number }; setMultipliers: (x: number, y: number) => void }> = ({ onAdd, multipliers, setMultipliers }) => {
+const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTime: string, arrTime: string, mx: number, my: number) => void; multipliers: { x: number; y: number }; setMultipliers: (x: number, y: number) => void }> = ({ onAdd, multipliers, setMultipliers }) => {
   const [depDate, setDepDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [arrDate, setArrDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [depTime, setDepTime] = useState('');
@@ -165,7 +165,7 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
 
   const handleAdd = () => {
     if (T > 0) {
-      onAdd(depDate, arrDate, depTime, arrTime);
+      onAdd(depDate, arrDate, depTime, arrTime, multipliers.x, multipliers.y);
       setDepTime('');
       setArrTime('');
     }

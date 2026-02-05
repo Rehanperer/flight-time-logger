@@ -19,22 +19,21 @@ interface FlightState {
         x: number;
         y: number;
     };
-    addLog: (depDate: string, arrDate: string, depTime: string, arrTime: string) => void;
+    addLog: (depDate: string, arrDate: string, depTime: string, arrTime: string, multiplierX: number, multiplierY: number) => void;
     removeLog: (id: string) => void;
     setMultipliers: (x: number, y: number) => void;
 }
 
 export const useFlightStore = create<FlightState>()(
     persist(
-        (set, get) => ({
+        (set) => ({
             logs: [],
             multipliers: {
                 x: 1.5,
                 y: 2.0,
             },
-            addLog: (depDate, arrDate, depTime, arrTime) => {
+            addLog: (depDate, arrDate, depTime, arrTime, multiplierX, multiplierY) => {
                 const durationMinutes = calculateDurationMinutes(depDate, depTime, arrDate, arrTime);
-                const { multipliers } = get();
                 const newLog: FlightLog = {
                     id: crypto.randomUUID(),
                     depDate,
@@ -42,8 +41,8 @@ export const useFlightStore = create<FlightState>()(
                     depTime,
                     arrTime,
                     durationMinutes,
-                    multiplierX: multipliers.x,
-                    multiplierY: multipliers.y,
+                    multiplierX,
+                    multiplierY,
                 };
                 set((state) => ({ logs: [newLog, ...state.logs] }));
             },
@@ -53,7 +52,7 @@ export const useFlightStore = create<FlightState>()(
         }),
         {
             name: 'flight-storage',
-            version: 1,
+            version: 2,
             migrate: (persistedState: any, version: number) => {
                 const today = new Date().toISOString().split('T')[0];
                 if (version === 0) {
