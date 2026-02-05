@@ -348,12 +348,15 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
     const totalT = monthlyLogs.reduce((acc, curr) => acc + curr.durationMinutes, 0);
     const totalTx = monthlyLogs.reduce((acc, curr) => {
       const decimalHours = curr.durationMinutes / 60;
-      return acc + (decimalHours * multipliers.x);
+      const mX = curr.multiplierX ?? multipliers.x;
+      return acc + (decimalHours * mX);
     }, 0);
     const totalTy = monthlyLogs.reduce((acc, curr) => {
       const decimalHours = curr.durationMinutes / 60;
-      const tx = decimalHours * multipliers.x;
-      return acc + (tx * multipliers.y);
+      const mX = curr.multiplierX ?? multipliers.x;
+      const mY = curr.multiplierY ?? multipliers.y;
+      const tx = decimalHours * mX;
+      return acc + (tx * mY);
     }, 0);
 
     return (
@@ -394,8 +397,10 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
         <div className="space-y-4">
           {monthlyLogs.map(log => {
             const decimalHours = log.durationMinutes / 60;
-            const Tx = decimalHours * multipliers.x;
-            const Ty = Tx * multipliers.y;
+            const mX = log.multiplierX ?? multipliers.x;
+            const mY = log.multiplierY ?? multipliers.y;
+            const Tx = decimalHours * mX;
+            const Ty = Tx * mY;
             return (
               <div key={log.id} className="p-5 bg-slate-900/60 border border-white/5 rounded-2xl premium-shadow group">
                 <div className="flex justify-between items-start mb-4">
@@ -419,11 +424,11 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
 
                 <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/10">
                   <div className="bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20">
-                    <span className="text-xs text-indigo-300 uppercase tracking-widest block mb-1 font-black">USD (${multipliers.x})</span>
+                    <span className="text-xs text-indigo-300 uppercase tracking-widest block mb-1 font-black">USD (${mX})</span>
                     <span className="text-xl font-black text-indigo-400 leading-none">${Tx.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className="bg-purple-500/10 p-4 rounded-xl border border-purple-500/20 text-right">
-                    <span className="text-xs text-purple-300 uppercase tracking-widest block mb-1 font-black">QAR (Rate {multipliers.y})</span>
+                    <span className="text-xs text-purple-300 uppercase tracking-widest block mb-1 font-black">QAR (Rate {mY})</span>
                     <span className="text-xl font-black text-purple-400 leading-none">{Ty.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 </div>
@@ -457,12 +462,15 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
           const totalT = monthlyLogs.reduce((acc, curr) => acc + curr.durationMinutes, 0);
           const totalTx = monthlyLogs.reduce((acc, curr) => {
             const decimalHours = curr.durationMinutes / 60;
-            return acc + (decimalHours * multipliers.x);
+            const mX = curr.multiplierX ?? multipliers.x;
+            return acc + (decimalHours * mX);
           }, 0);
           const totalTy = monthlyLogs.reduce((acc, curr) => {
             const decimalHours = curr.durationMinutes / 60;
-            const tx = decimalHours * multipliers.x;
-            return acc + (tx * multipliers.y);
+            const mX = curr.multiplierX ?? multipliers.x;
+            const mY = curr.multiplierY ?? multipliers.y;
+            const tx = decimalHours * mX;
+            return acc + (tx * mY);
           }, 0);
 
           if (totalT === 0) return null;

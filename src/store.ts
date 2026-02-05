@@ -9,6 +9,8 @@ export interface FlightLog {
     depTime: string; // HHmm format
     arrTime: string; // HHmm format
     durationMinutes: number;
+    multiplierX: number;
+    multiplierY: number;
 }
 
 interface FlightState {
@@ -24,7 +26,7 @@ interface FlightState {
 
 export const useFlightStore = create<FlightState>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             logs: [],
             multipliers: {
                 x: 1.5,
@@ -32,6 +34,7 @@ export const useFlightStore = create<FlightState>()(
             },
             addLog: (depDate, arrDate, depTime, arrTime) => {
                 const durationMinutes = calculateDurationMinutes(depDate, depTime, arrDate, arrTime);
+                const { multipliers } = get();
                 const newLog: FlightLog = {
                     id: crypto.randomUUID(),
                     depDate,
@@ -39,6 +42,8 @@ export const useFlightStore = create<FlightState>()(
                     depTime,
                     arrTime,
                     durationMinutes,
+                    multiplierX: multipliers.x,
+                    multiplierY: multipliers.y,
                 };
                 set((state) => ({ logs: [newLog, ...state.logs] }));
             },
