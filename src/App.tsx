@@ -31,9 +31,12 @@ const App: React.FC = () => {
       <header className="p-6 flex justify-between items-center z-10">
         <div className="flex items-center gap-2">
           <Plane className="text-indigo-400 w-8 h-8" />
-          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
-            FlightLogger
-          </h1>
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
+              FlightLogger
+            </h1>
+            <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest leading-none">v1.3.0</span>
+          </div>
         </div>
       </header>
 
@@ -305,7 +308,12 @@ const HistoryView: React.FC<{ logs: FlightLog[]; onRemove: (id: string) => void 
                     ? `${format(parseISO(log.depDate), 'MMM dd')} - ${format(parseISO(log.arrDate), 'MMM dd, yyyy')}`
                     : 'Invalid Date'}
               </div>
-              <div className="text-base text-slate-300 font-bold tracking-wide">{log.depTime} — {log.arrTime}</div>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="text-base text-slate-300 font-bold tracking-wide">{log.depTime} — {log.arrTime}</div>
+                <div className="px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[10px] text-indigo-400 font-black uppercase">
+                  ${log.multiplierX}
+                </div>
+              </div>
             </div>
             <div className="text-right flex-shrink-0 ml-4">
               <div className="text-xl font-black text-indigo-400">{formatMinutes(log.durationMinutes)}</div>
@@ -429,7 +437,7 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
                   </div>
                   <div className="bg-purple-500/10 p-4 rounded-xl border border-purple-500/20 text-right">
                     <span className="text-xs text-purple-300 uppercase tracking-widest block mb-1 font-black">QAR (Rate {mY})</span>
-                    <span className="text-xl font-black text-purple-400 leading-none">{Ty.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="text-xl font-black text-purple-400 leading-none">{Ty.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} QAR</span>
                   </div>
                 </div>
               </div>

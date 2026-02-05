@@ -52,19 +52,29 @@ export const useFlightStore = create<FlightState>()(
         }),
         {
             name: 'flight-storage',
-            version: 2,
+            version: 3,
             migrate: (persistedState: any, version: number) => {
                 const today = new Date().toISOString().split('T')[0];
-                if (version === 0) {
+                if (version < 1) {
                     if (persistedState && persistedState.logs) {
-                        return {
-                            ...persistedState,
-                            logs: persistedState.logs.map((log: any) => ({
-                                ...log,
-                                depDate: log.depDate || log.date || today,
-                                arrDate: log.arrDate || log.date || today,
-                            })),
-                        };
+                        persistedState.logs = persistedState.logs.map((log: any) => ({
+                            ...log,
+                            depDate: log.depDate || log.date || today,
+                            arrDate: log.arrDate || log.date || today,
+                        }));
+                    }
+                }
+
+                // Version 1 or 2 to 3: Ensure all logs have multiplierX and multiplierY
+                if (version < 3) {
+                    if (persistedState && persistedState.logs) {
+                        const defaultX = persistedState.multipliers?.x || 1.5;
+                        const defaultY = persistedState.multipliers?.y || 3.64;
+                        persistedState.logs = persistedState.logs.map((log: any) => ({
+                            ...log,
+                            multiplierX: log.multiplierX ?? defaultX,
+                            multiplierY: log.multiplierY ?? defaultY,
+                        }));
                     }
                 }
                 return persistedState;
