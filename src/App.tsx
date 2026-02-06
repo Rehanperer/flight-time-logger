@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useFlightStore, type FlightLog } from './store';
-import { formatMinutes, formatMinutesDecimal } from './utils/time';
-import { Plus, X, History, Plane, Calculator, ArrowLeft } from 'lucide-react';
+import { Plus, X, History, Plane, Calculator, ArrowLeft, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, parseISO, parse } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { formatMinutes, formatMinutesDecimal, calculateDurationMinutes, adjustDurationMinutes } from './utils/time';
 
 const App: React.FC = () => {
   const { logs, multipliers, addLog, removeLog, setMultipliers } = useFlightStore();
@@ -49,7 +49,7 @@ const App: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <CalculatorView onAdd={(...args: [string, string, string, string, number, number]) => { addLog(...args); showToast('Flight Logged!'); }} multipliers={multipliers} setMultipliers={setMultipliers} />
+              <CalculatorView onAdd={(...args: [string, string, string, string, number, number, number?]) => { addLog(...args); showToast('Flight Logged!'); }} multipliers={multipliers} setMultipliers={setMultipliers} />
             </motion.div>
           )}
           {activeTab === 'history' && (
@@ -142,33 +142,23 @@ const NavButton: React.FC<{ active: boolean; onClick: () => void; icon: React.Re
 
 // --- VIEW COMPONENTS ---
 
-const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTime: string, arrTime: string, mx: number, my: number) => void; multipliers: { x: number; y: number }; setMultipliers: (x: number, y: number) => void }> = ({ onAdd, multipliers, setMultipliers }) => {
+const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTime: string, arrTime: string, mx: number, my: number, duration?: number) => void; multipliers: { x: number; y: number }; setMultipliers: (x: number, y: number) => void }> = ({ onAdd, multipliers, setMultipliers }) => {
   const [depDate, setDepDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [arrDate, setArrDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [depTime, setDepTime] = useState('');
   const [arrTime, setArrTime] = useState('');
 
-  const calculateT = () => {
-    if (depTime.length !== 4 || arrTime.length !== 4) return 0;
-    try {
-      const dep = parse(`${depDate} ${depTime}`, 'yyyy-MM-dd HHmm', new Date());
-      const arr = parse(`${arrDate} ${arrTime}`, 'yyyy-MM-dd HHmm', new Date());
-      if (isNaN(dep.getTime()) || isNaN(arr.getTime())) return 0;
-      const diff = (arr.getTime() - dep.getTime()) / (1000 * 60);
-      return diff > 0 ? diff : 0;
-    } catch {
-      return 0;
-    }
-  };
+  const rawT = calculateDurationMinutes(depDate, depTime, arrDate, arrTime);
+  const T = adjustDurationMinutes(rawT);
+  const isAdjusted = T !== rawT;
 
-  const T = calculateT();
   const decimalHours = T / 60;
   const Tx = Math.round(decimalHours * multipliers.x * 100) / 100;
   const Ty = Math.round(Tx * multipliers.y * 100) / 100;
 
   const handleAdd = () => {
     if (T > 0) {
-      onAdd(depDate, arrDate, depTime, arrTime, multipliers.x, multipliers.y);
+      onAdd(depDate, arrDate, depTime, arrTime, multipliers.x, multipliers.y, T);
       setDepTime('');
       setArrTime('');
     }
@@ -274,7 +264,14 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
           className="glass-card p-6 grid grid-cols-1 gap-4 premium-shadow bg-indigo-900/10 border-indigo-500/20"
         >
           <div className="flex justify-between items-center border-b border-white/10 pb-3">
-            <span className="text-sm text-slate-300 font-bold uppercase tracking-widest">Flying Hrs</span>
+            <div className="flex flex-col">
+              <span className="text-sm text-slate-300 font-bold uppercase tracking-widest">Flying Hrs</span>
+              {isAdjusted && (
+                <span className="text-[10px] text-indigo-400 font-black flex items-center gap-1 mt-1 animate-pulse uppercase tracking-tight">
+                  <Info size={10} /> 10-24H Rule Applied
+                </span>
+              )}
+            </div>
             <span className="text-2xl font-black text-indigo-400">{formatMinutes(T)}</span>
           </div>
           <div className="flex justify-between items-center border-b border-white/10 pb-3">

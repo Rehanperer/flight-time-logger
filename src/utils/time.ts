@@ -30,6 +30,17 @@ export function calculateDurationMinutes(depDate: string, depTime: string, arrDa
     return diff > 0 ? diff : 0;
 }
 
+export function adjustDurationMinutes(minutes: number) {
+    // Rule: If flight is between 10 and 24 hours, it counts as 24 hours
+    const tenHoursInMinutes = 10 * 60;
+    const twentyFourHoursInMinutes = 24 * 60;
+
+    if (minutes >= tenHoursInMinutes && minutes <= twentyFourHoursInMinutes) {
+        return twentyFourHoursInMinutes;
+    }
+    return minutes;
+}
+
 export function formatMinutes(totalMinutes: number) {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
