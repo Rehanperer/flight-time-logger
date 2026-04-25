@@ -479,7 +479,7 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
       </div>
 
       <div className="grid grid-cols-1 gap-3">
-        {months.map((month, idx) => {
+        {months.map((month, idx) => ({ month, idx })).reverse().map(({ month, idx }) => {
           const monthlyLogs = getMonthlyLogs(idx);
           const totalT = monthlyLogs.reduce((acc, curr) => acc + curr.durationMinutes, 0);
           const totalTx = monthlyLogs.reduce((acc, curr) => {
