@@ -288,45 +288,62 @@ const CalculatorView: React.FC<{ onAdd: (depDate: string, arrDate: string, depTi
   );
 };
 
-const HistoryView: React.FC<{ logs: FlightLog[]; onRemove: (id: string) => void }> = ({ logs, onRemove }) => (
-  <div className="space-y-4">
-    <h2 className="text-xl font-bold flex items-center gap-2"><History size={20} /> Recent Flights</h2>
-    {logs.length === 0 ? (
-      <div className="text-center py-10 text-slate-500">No flights logged yet.</div>
-    ) : (
-      <div className="space-y-3">
-        {logs.map((log) => (
-          <div key={log.id} className="glass-card p-4 flex justify-between items-center relative group">
-            <div className="min-w-0 flex-1">
-              <div className="text-base font-bold text-slate-100 truncate">
-                {log.depDate && log.arrDate && log.depDate === log.arrDate
-                  ? format(parseISO(log.depDate), 'MMM dd, yyyy')
-                  : log.depDate && log.arrDate
-                    ? `${format(parseISO(log.depDate), 'MMM dd')} - ${format(parseISO(log.arrDate), 'MMM dd, yyyy')}`
-                    : 'Invalid Date'}
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="text-base text-slate-300 font-bold tracking-wide">{log.depTime} — {log.arrTime}</div>
-                <div className="px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[10px] text-indigo-400 font-black uppercase">
-                  ${log.multiplierX}
+const HistoryView: React.FC<{ logs: FlightLog[]; onRemove: (id: string) => void }> = ({ logs, onRemove }) => {
+  const { multipliers } = useFlightStore();
+  
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold flex items-center gap-2"><History size={20} /> Recent Flights</h2>
+      {logs.length === 0 ? (
+        <div className="text-center py-10 text-slate-500">No flights logged yet.</div>
+      ) : (
+        <div className="space-y-3">
+          {logs.map((log) => {
+            const mX = log.multiplierX ?? multipliers.x;
+            const mY = log.multiplierY ?? multipliers.y;
+            const decimalHours = log.durationMinutes / 60;
+            const usdTotal = decimalHours * mX;
+            const qarTotal = usdTotal * mY;
+
+            return (
+              <div key={log.id} className="glass-card p-4 flex justify-between items-center relative group">
+                <div className="min-w-0 flex-1">
+                  <div className="text-base font-bold text-slate-100 truncate">
+                    {log.depDate && log.arrDate && log.depDate === log.arrDate
+                      ? format(parseISO(log.depDate), 'MMM dd, yyyy')
+                      : log.depDate && log.arrDate
+                        ? `${format(parseISO(log.depDate), 'MMM dd')} - ${format(parseISO(log.arrDate), 'MMM dd, yyyy')}`
+                        : 'Invalid Date'}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="text-base text-slate-300 font-bold tracking-wide">{log.depTime} — {log.arrTime}</div>
+                  </div>
                 </div>
+                <div className="text-right flex-shrink-0 ml-4 flex flex-col items-end gap-1">
+                  <div className="text-xl font-black text-indigo-400">{formatMinutes(log.durationMinutes)}</div>
+                  <div className="flex gap-2">
+                    <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[10px] text-indigo-400 font-black uppercase">
+                      ${usdTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-pink-500/10 border border-pink-500/20 text-[10px] text-pink-400 font-black uppercase">
+                      {qarTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} QAR
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onRemove(log.id)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={12} />
+                </button>
               </div>
-            </div>
-            <div className="text-right flex-shrink-0 ml-4">
-              <div className="text-xl font-black text-indigo-400">{formatMinutes(log.durationMinutes)}</div>
-            </div>
-            <button
-              onClick={() => onRemove(log.id)}
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <X size={12} />
-            </button>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-);
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
   const { multipliers } = useFlightStore();
