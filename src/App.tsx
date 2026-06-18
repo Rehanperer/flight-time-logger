@@ -322,10 +322,10 @@ const HistoryView: React.FC<{ logs: FlightLog[]; onRemove: (id: string) => void 
                 <div className="text-right flex-shrink-0 ml-4 flex flex-col items-end gap-1">
                   <div className="text-xl font-black text-indigo-400">{formatMinutes(log.durationMinutes)}</div>
                   <div className="flex gap-2">
-                    <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-[10px] text-indigo-400 font-black uppercase">
+                    <span className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-base text-indigo-400 font-black uppercase">
                       ${usdTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded bg-pink-500/10 border border-pink-500/20 text-[10px] text-pink-400 font-black uppercase">
+                    <span className="px-2 py-0.5 rounded bg-pink-500/10 border border-pink-500/20 text-base text-pink-400 font-black uppercase">
                       {qarTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} QAR
                     </span>
                   </div>
@@ -506,11 +506,11 @@ const StatsView: React.FC<{ logs: FlightLog[] }> = ({ logs }) => {
               <div className="flex justify-between items-start mb-4">
                 <div className="text-left">
                   <div className="text-xl font-black text-slate-100 group-hover:text-indigo-400 transition-colors">{month}</div>
-                  <div className="text-xs text-slate-500 uppercase font-black tracking-widest mt-1">{monthlyLogs.length} Flights</div>
+                  <div className="text-base text-slate-500 uppercase font-black tracking-widest mt-1">{monthlyLogs.length} Flights</div>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-black text-indigo-400 leading-tight">{formatMinutes(totalT)}</div>
-                  <div className="text-xs text-slate-500 font-bold">{formatMinutesDecimal(totalT)} hrs</div>
+                  <div className="text-base text-slate-500 font-bold">{formatMinutesDecimal(totalT)} hrs</div>
                 </div>
               </div>
 
